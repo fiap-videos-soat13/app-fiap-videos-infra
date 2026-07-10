@@ -1,0 +1,18 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: fiap-videos-api
+    static_configs:
+      - targets: ['api:3000']
+    metrics_path: /metrics
+
+  - job_name: fiap-videos-processor
+    static_configs:
+      - targets: ['processor:3001']
+    metrics_path: /metrics
+
+  - job_name: fiap-videos-notifier
+    static_configs:
+      - targets: ['notifier:3002']
+    metrics_path: /metrics

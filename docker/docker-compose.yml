@@ -1,0 +1,150 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: fiap
+      POSTGRES_PASSWORD: fiap
+      POSTGRES_DB: fiap_videos
+    ports:
+      - '5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init-dbs.sh:/docker-entrypoint-initdb.d/01-init-dbs.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U fiap']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6380:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: fiap
+      RABBITMQ_DEFAULT_PASS: fiap
+    ports:
+      - '5673:5672'
+      - '15673:15672'
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
+  api:
+    build:
+      context: ../../app-fiap-videos-api
+      dockerfile: Dockerfile
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://fiap:fiap@postgres:5432/fiap_videos_api
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://fiap:fiap@rabbitmq:5672/
+      JWT_SECRET: dev-secret-change-me
+      STORAGE_PATH: /app/storage
+      VIDEO_EVENTS_EXCHANGE: fiap-videos.events
+      VIDEO_EVENTS_DLX: fiap-videos.events.dlx
+    ports:
+      - '3000:3000'
+    volumes:
+      - video_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  processor:
+    build:
+      context: ../../app-fiap-videos-processor
+      dockerfile: Dockerfile
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://fiap:fiap@postgres:5432/fiap_videos_processor
+      RABBITMQ_URL: amqp://fiap:fiap@rabbitmq:5672/
+      STORAGE_PATH: /app/storage
+      FFMPEG_PATH: ffmpeg
+      CONSUMER_PREFETCH: 5
+      VIDEO_EVENTS_EXCHANGE: fiap-videos.events
+      VIDEO_EVENTS_DLX: fiap-videos.events.dlx
+    ports:
+      - '3001:3001'
+    volumes:
+      - video_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      api:
+        condition: service_started
+    deploy:
+      replicas: 1
+
+  notifier:
+    build:
+      context: ../../app-fiap-videos-notifier
+      dockerfile: Dockerfile
+    environment:
+      PORT: 3002
+      DATABASE_URL: postgresql://fiap:fiap@postgres:5432/fiap_videos_notifier
+      RABBITMQ_URL: amqp://fiap:fiap@rabbitmq:5672/
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_FROM: noreply@fiap-videos.local
+      VIDEO_EVENTS_EXCHANGE: fiap-videos.events
+      VIDEO_EVENTS_DLX: fiap-videos.events.dlx
+    ports:
+      - '3002:3002'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    volumes:
+      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - '9091:9090'
+    depends_on:
+      - api
+      - processor
+      - notifier
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ../grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - '3003:3000'
+    depends_on:
+      - prometheus
+
+volumes:
+  pgdata:
+  video_storage:
