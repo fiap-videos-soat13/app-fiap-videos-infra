@@ -9,7 +9,7 @@ Cada microsserviço possui **database PostgreSQL isolado** (padrão database-per
 | Stack completa (`app-fiap-videos-infra/docker`) | Container único | `5433` | `fiap_videos_api`, `fiap_videos_processor`, `fiap_videos_notifier` |
 | API isolada | `app-fiap-videos-api/docker-compose.yml` | `5433` | `fiap_videos_api` |
 | Processor isolado | `app-fiap-videos-processor/docker-compose.yml` | `5434` | `fiap_videos_processor` |
-| Notifier isolado | `app-fiap-videos-notifier/docker-compose.yml` | `5435` | `fiap_videos_notifier` |
+| Notifier isolado | `app-fiap-videos-notifier/docker-compose.yml` | `5436` | `fiap_videos_notifier` |
 
 Credenciais locais: usuário `fiap`, senha `fiap`.
 
