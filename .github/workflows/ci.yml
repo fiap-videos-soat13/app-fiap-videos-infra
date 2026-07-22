@@ -48,8 +48,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Dry-run processor manifest
-        run: kubectl apply --dry-run=client --validate=false -f k8s/processor-deployment.yaml
+      - name: Install kubeconform
+        run: |
+          curl -sL "https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz" \
+            | tar xz kubeconform
+
+      - name: Validate processor manifest
+        run: ./kubeconform -summary -kubernetes-version 1.30.0 k8s/processor-deployment.yaml
 
   grafana-dashboards:
     runs-on: ubuntu-latest
