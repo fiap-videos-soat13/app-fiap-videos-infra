@@ -19,6 +19,7 @@ docker compose up --build
 | **RabbitMQ** | **5673 / 15673** | **Único broker compartilhado** (fiap / fiap) |
 | MailHog | 8025 | E-mails de teste |
 | Prometheus | 9091 | Métricas |
+| Alertmanager | 9093 | Alertas (dev: webhook dummy) |
 | Grafana | 3003 | Dashboards |
 
 ## RabbitMQ compartilhado
@@ -52,3 +53,12 @@ Depois rode cada serviço com `yarn start:dev` nos respectivos repositórios.
 ## Kubernetes
 
 Manifests básicos em `k8s/` (HPA no processor para escalar workers).
+
+## CI
+
+GitHub Actions valida `docker compose config`, configs do Prometheus/Alertmanager e manifests K8s.
+
+## Observabilidade
+
+Prometheus carrega regras em `prometheus/alerts.yml` e encaminha para Alertmanager (`:9093`).  
+Em produção, substitua o receiver dummy em `prometheus/alertmanager.yml` por Slack/e-mail.
