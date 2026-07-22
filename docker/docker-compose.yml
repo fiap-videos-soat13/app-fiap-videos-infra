@@ -127,12 +127,23 @@ services:
     image: prom/prometheus:v2.55.1
     volumes:
       - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
     ports:
       - '9091:9090'
     depends_on:
       - api
       - processor
       - notifier
+      - alertmanager
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    volumes:
+      - ../prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - '9093:9093'
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
 
   grafana:
     image: grafana/grafana:11.3.0

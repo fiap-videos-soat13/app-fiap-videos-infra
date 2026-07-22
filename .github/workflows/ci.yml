@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  docker-compose-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Docker Compose
+        run: docker compose -f docker/docker-compose.yml config --quiet
+
+  prometheus-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install promtool
+        run: |
+          curl -sL "https://github.com/prometheus/prometheus/releases/download/v2.55.1/prometheus-2.55.1.linux-amd64.tar.gz" \
+            | tar xz --strip-components=1 prometheus-2.55.1.linux-amd64/promtool
+
+      - name: Check Prometheus config
+        run: ./promtool check config prometheus/prometheus.yml
+
+      - name: Check alert rules
+        run: ./promtool check rules prometheus/alerts.yml
+
+  alertmanager-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install amtool
+        run: |
+          curl -sL "https://github.com/prometheus/alertmanager/releases/download/v0.27.0/alertmanager-0.27.0.linux-amd64.tar.gz" \
+            | tar xz --strip-components=1 alertmanager-0.27.0.linux-amd64/amtool
+
+      - name: Check Alertmanager config
+        run: ./amtool check-config prometheus/alertmanager.yml
+
+  kubernetes-manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dry-run processor manifest
+        run: kubectl apply --dry-run=client -f k8s/processor-deployment.yaml
+
+  grafana-dashboards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Grafana dashboard JSON
+        run: python -m json.tool grafana/dashboards/fiap-videos-overview.json > /dev/null
+
+  ci-success:
+    runs-on: ubuntu-latest
+    needs:
+      - docker-compose-config
+      - prometheus-config
+      - alertmanager-config
+      - kubernetes-manifests
+      - grafana-dashboards
+    steps:
+      - run: echo "Infra CI passed"
