@@ -14,7 +14,7 @@ docker compose up --build
 | API | 3000 | Upload, auth, status, download |
 | Processor | 3001 | Workers ffmpeg + zip |
 | Notifier | 3002 | E-mail em falhas |
-| PostgreSQL | 5433 | Persistência (3 databases) |
+| PostgreSQL | 5432 | Persistência (3 databases) |
 | Redis | 6380 | Cache de listagem |
 | **RabbitMQ** | **5673 / 15673** | **Único broker compartilhado** (fiap / fiap) |
 | MailHog | 8025 | E-mails de teste |

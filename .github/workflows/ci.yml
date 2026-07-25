@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  docker-compose-config:
+    name: Validate Docker Compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate full stack compose
+        working-directory: docker
+        run: docker compose config
+
+  k8s-dry-run:
+    name: Kubernetes Dry Run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.30.0'
+
+      - name: Dry-run Kubernetes manifests
+        run: kubectl apply --dry-run=client -f k8s/
+
+  monitoring-config-check:
+    name: Monitoring Config Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Prometheus YAML
+        run: |
+          python3 - <<'PY'
+          import yaml
+          with open('prometheus/prometheus.yml') as f:
+              yaml.safe_load(f)
+          print('prometheus/prometheus.yml is valid YAML')
+          PY
+
+      - name: Validate Grafana provisioning YAML
+        run: |
+          python3 - <<'PY'
+          import yaml
+          from pathlib import Path
+          for p in Path('grafana/provisioning').rglob('*.yml'):
+              with open(p) as f:
+                  yaml.safe_load(f)
+              print(f'{p} is valid YAML')
+          PY
+
+      - name: Validate Grafana dashboard JSON
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for p in Path('grafana/dashboards').rglob('*.json'):
+              with open(p) as f:
+                  json.load(f)
+              print(f'{p} is valid JSON')
+          PY
+
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [docker-compose-config, k8s-dry-run, monitoring-config-check]
+    if: always()
+    steps:
+      - name: Require all jobs to succeed
+        run: |
+          if [ "${{ needs.docker-compose-config.result }}" != "success" ] || \
+             [ "${{ needs.k8s-dry-run.result }}" != "success" ] || \
+             [ "${{ needs.monitoring-config-check.result }}" != "success" ]; then
+            echo "One or more required CI jobs failed."
+            exit 1
+          fi
+          echo "All required CI jobs passed."
