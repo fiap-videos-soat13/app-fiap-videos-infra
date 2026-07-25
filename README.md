@@ -4,6 +4,7 @@ Stack completa via Docker Compose:
 
 ```bash
 cd docker
+cp .env.example .env   # edit JWT_SECRET if needed
 docker compose up --build
 ```
 
