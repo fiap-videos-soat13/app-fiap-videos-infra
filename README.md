@@ -8,7 +8,7 @@ Local development platform and cloud infrastructure for FIAP Videos SOAT13.
 docker/              # Docker Compose (full stack + dependency profiles)
 prometheus/          # Local metrics scrape config
 grafana/             # Local dashboards and provisioning
-insomnia/            # API collection for manual testing
+insomnia/            # API collection for manual testing (Insomnia)
 k8s/base/            # Kubernetes Deployments, Ingress, migration Jobs
 k8s/overlays/        # staging / production Kustomize overlays
 terraform/           # AWS: EKS, ECR, RDS, S3, Secrets Manager, IRSA
@@ -32,6 +32,8 @@ docker compose up --build
 | PostgreSQL | 5433 | 3 databases |
 | Redis | 6380 | List cache |
 | RabbitMQ | 5673 / 15673 | Shared message broker |
+| MinIO (S3 API) | 9000 | Object storage |
+| MinIO console | 9001 | `minioadmin` / `minioadmin` |
 | MailHog | 8025 | Test email UI |
 | Prometheus | 9091 | Metrics |
 | Grafana | 3003 | Dashboards |
@@ -40,7 +42,7 @@ docker compose up --build
 
 ```bash
 cd docker
-docker compose up postgres redis rabbitmq mailhog -d
+docker compose up postgres redis rabbitmq mailhog minio minio-init -d
 ```
 
 Shared RabbitMQ for isolated service compose files:

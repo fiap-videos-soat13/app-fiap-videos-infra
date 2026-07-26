@@ -47,6 +47,16 @@ services:
       - '1025:1025'
       - '8025:8025'
 
+  minio:
+    extends:
+      file: minio-compose.yml
+      service: minio
+
+  minio-init:
+    extends:
+      file: minio-compose.yml
+      service: minio-init
+
   api:
     build:
       context: ../../app-fiap-videos-api
@@ -57,13 +67,16 @@ services:
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://fiap:fiap@rabbitmq:5672/
       JWT_SECRET: dev-secret-change-me
-      STORAGE_PATH: /app/storage
+      STORAGE_BACKEND: minio
+      S3_BUCKET: fiap-videos
+      S3_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_REGION: us-east-1
       VIDEO_EVENTS_EXCHANGE: fiap-videos.events
       VIDEO_EVENTS_DLX: fiap-videos.events.dlx
     ports:
       - '3000:3000'
-    volumes:
-      - video_storage:/app/storage
     depends_on:
       postgres:
         condition: service_healthy
@@ -71,6 +84,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
 
   processor:
     build:
@@ -80,20 +95,25 @@ services:
       PORT: 3001
       DATABASE_URL: postgresql://fiap:fiap@postgres:5432/fiap_videos_processor
       RABBITMQ_URL: amqp://fiap:fiap@rabbitmq:5672/
-      STORAGE_PATH: /app/storage
+      STORAGE_BACKEND: minio
+      S3_BUCKET: fiap-videos
+      S3_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_REGION: us-east-1
       FFMPEG_PATH: ffmpeg
       CONSUMER_PREFETCH: 5
       VIDEO_EVENTS_EXCHANGE: fiap-videos.events
       VIDEO_EVENTS_DLX: fiap-videos.events.dlx
     ports:
       - '3001:3001'
-    volumes:
-      - video_storage:/app/storage
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
       api:
         condition: service_started
     deploy:
@@ -149,4 +169,4 @@ services:
 
 volumes:
   pgdata:
-  video_storage:
+  minio_data:

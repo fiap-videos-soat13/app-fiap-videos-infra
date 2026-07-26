@@ -1,5 +1,5 @@
 # Infrastructure-only stack for app-fiap-videos
-# Starts backing services (Postgres, Redis, RabbitMQ, MailHog) without app containers.
+# Starts backing services (Postgres, Redis, RabbitMQ, MailHog, MinIO) without app containers.
 # Usage:
 #   docker compose -f docker/docker-compose.infra.yml up -d
 #   docker compose -f docker/docker-compose.infra.yml down
@@ -56,5 +56,16 @@ services:
       - '1025:1025'
       - '8025:8025'
 
+  minio:
+    extends:
+      file: minio-compose.yml
+      service: minio
+
+  minio-init:
+    extends:
+      file: minio-compose.yml
+      service: minio-init
+
 volumes:
   pgdata:
+  minio_data:
