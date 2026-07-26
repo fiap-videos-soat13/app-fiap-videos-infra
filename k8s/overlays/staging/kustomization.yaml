@@ -1,0 +1,75 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - external-secrets
+
+namePrefix: staging-
+
+images:
+  - name: fiap-videos-api
+    newName: REPLACE_AWS_ACCOUNT.dkr.ecr.sa-east-1.amazonaws.com/fiap-videos-api
+    newTag: latest-staging
+  - name: fiap-videos-processor
+    newName: REPLACE_AWS_ACCOUNT.dkr.ecr.sa-east-1.amazonaws.com/fiap-videos-processor
+    newTag: latest-staging
+  - name: fiap-videos-notifier
+    newName: REPLACE_AWS_ACCOUNT.dkr.ecr.sa-east-1.amazonaws.com/fiap-videos-notifier
+    newTag: latest-staging
+  - name: fiap-videos-api-migrator
+    newName: REPLACE_AWS_ACCOUNT.dkr.ecr.sa-east-1.amazonaws.com/fiap-videos-api
+    newTag: migrator-staging
+  - name: fiap-videos-processor-migrator
+    newName: REPLACE_AWS_ACCOUNT.dkr.ecr.sa-east-1.amazonaws.com/fiap-videos-processor
+    newTag: migrator-staging
+  - name: fiap-videos-notifier-migrator
+    newName: REPLACE_AWS_ACCOUNT.dkr.ecr.sa-east-1.amazonaws.com/fiap-videos-notifier
+    newTag: migrator-staging
+
+patches:
+  - path: patches/api-sa-irsa.yaml
+    target:
+      kind: ServiceAccount
+      name: fiap-videos-api
+  - path: patches/processor-sa-irsa.yaml
+    target:
+      kind: ServiceAccount
+      name: fiap-videos-processor
+  - path: patches/storage-config.yaml
+    target:
+      kind: ConfigMap
+      name: fiap-videos-storage
+  - path: patches/api-runtime-config.yaml
+    target:
+      kind: ConfigMap
+      name: fiap-videos-api-runtime
+  - path: ingress-patch.yaml
+    target:
+      kind: Ingress
+      name: fiap-videos-api
+  - path: patches/delete-static-secret.yaml
+
+replacements:
+  - source:
+      kind: ExternalSecret
+      name: fiap-videos-secrets
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: ExternalSecret
+        fieldPaths:
+          - spec.target.name
+  - source:
+      kind: ExternalSecret
+      name: fiap-videos-secrets
+      fieldPath: spec.target.name
+    targets:
+      - select:
+          kind: Deployment
+        fieldPaths:
+          - spec.template.spec.containers.*.envFrom.*.secretRef.name
+      - select:
+          kind: Job
+        fieldPaths:
+          - spec.template.spec.containers.*.envFrom.*.secretRef.name

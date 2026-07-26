@@ -12,6 +12,7 @@ spec:
       labels:
         app: fiap-videos-processor
     spec:
+      serviceAccountName: fiap-videos-processor
       containers:
         - name: processor
           image: fiap-videos-processor:latest
@@ -20,6 +21,8 @@ spec:
           envFrom:
             - secretRef:
                 name: fiap-videos-secrets
+            - configMapRef:
+                name: fiap-videos-storage
           resources:
             requests:
               cpu: 250m
@@ -28,21 +31,13 @@ spec:
               cpu: '2'
               memory: 2Gi
 ---
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
+apiVersion: v1
+kind: Service
 metadata:
-  name: fiap-videos-processor-hpa
+  name: fiap-videos-processor
 spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: fiap-videos-processor
-  minReplicas: 2
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
+  selector:
+    app: fiap-videos-processor
+  ports:
+    - port: 3001
+      targetPort: 3001

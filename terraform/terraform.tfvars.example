@@ -1,0 +1,7 @@
+aws_region  = "sa-east-1"
+environment = "staging"
+
+# Edit before terraform apply:
+# project_name = "fiap-videos"
+# eks_node_desired_size = 2
+# k8s_service_account_prefix = "staging-"
