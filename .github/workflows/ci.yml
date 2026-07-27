@@ -14,22 +14,46 @@ jobs:
 
       - name: Validate full stack compose
         working-directory: docker
-        run: docker compose config
+        run: |
+          cp .env.example .env
+          docker compose config
+
+  prometheus-config:
+    name: Prometheus Config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install promtool
+        run: |
+          curl -sL "https://github.com/prometheus/prometheus/releases/download/v2.55.1/prometheus-2.55.1.linux-amd64.tar.gz" \
+            | tar xz --strip-components=1 prometheus-2.55.1.linux-amd64/promtool
+
+      - name: Check Prometheus config
+        run: ./promtool check config prometheus/prometheus.yml
+
+      - name: Check alert rules
+        run: ./promtool check rules prometheus/alerts.yml
+
+  alertmanager-config:
+    name: Alertmanager Config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install amtool
+        run: |
+          curl -sL "https://github.com/prometheus/alertmanager/releases/download/v0.27.0/alertmanager-0.27.0.linux-amd64.tar.gz" \
+            | tar xz --strip-components=1 alertmanager-0.27.0.linux-amd64/amtool
+
+      - name: Check Alertmanager config
+        run: ./amtool check-config prometheus/alertmanager.yml
 
   monitoring-config-check:
     name: Monitoring Config Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Validate Prometheus YAML
-        run: |
-          python3 - <<'PY'
-          import yaml
-          with open('prometheus/prometheus.yml') as f:
-              yaml.safe_load(f)
-          print('prometheus/prometheus.yml is valid YAML')
-          PY
 
       - name: Validate Grafana provisioning YAML
         run: |
@@ -56,12 +80,18 @@ jobs:
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [docker-compose-config, monitoring-config-check]
+    needs:
+      - docker-compose-config
+      - prometheus-config
+      - alertmanager-config
+      - monitoring-config-check
     if: always()
     steps:
       - name: Require all jobs to succeed
         run: |
           if [ "${{ needs.docker-compose-config.result }}" != "success" ] || \
+             [ "${{ needs.prometheus-config.result }}" != "success" ] || \
+             [ "${{ needs.alertmanager-config.result }}" != "success" ] || \
              [ "${{ needs.monitoring-config-check.result }}" != "success" ]; then
             echo "One or more required CI jobs failed."
             exit 1
