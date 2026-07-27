@@ -10,25 +10,30 @@ namePrefix: staging-
 
 images:
   - name: fiap-videos-api
-    newName: REPLACE_AWS_ACCOUNT.dkr.ecr.us-east-2.amazonaws.com/fiap-videos-api
+    newName: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/fiap-videos-api
     newTag: latest-staging
   - name: fiap-videos-processor
-    newName: REPLACE_AWS_ACCOUNT.dkr.ecr.us-east-2.amazonaws.com/fiap-videos-processor
+    newName: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/fiap-videos-processor
     newTag: latest-staging
   - name: fiap-videos-notifier
-    newName: REPLACE_AWS_ACCOUNT.dkr.ecr.us-east-2.amazonaws.com/fiap-videos-notifier
+    newName: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/fiap-videos-notifier
     newTag: latest-staging
   - name: fiap-videos-api-migrator
-    newName: REPLACE_AWS_ACCOUNT.dkr.ecr.us-east-2.amazonaws.com/fiap-videos-api
+    newName: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/fiap-videos-api
     newTag: migrator-staging
   - name: fiap-videos-processor-migrator
-    newName: REPLACE_AWS_ACCOUNT.dkr.ecr.us-east-2.amazonaws.com/fiap-videos-processor
+    newName: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/fiap-videos-processor
     newTag: migrator-staging
   - name: fiap-videos-notifier-migrator
-    newName: REPLACE_AWS_ACCOUNT.dkr.ecr.us-east-2.amazonaws.com/fiap-videos-notifier
+    newName: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/fiap-videos-notifier
     newTag: migrator-staging
 
 patches:
+  - path: patches/api-deployment.yaml
+  - path: patches/processor-deployment.yaml
+  - path: patches/notifier-deployment.yaml
+  - path: patches/api-hpa.yaml
+  - path: patches/processor-hpa.yaml
   - path: patches/api-deployment-sa.yaml
   - path: patches/processor-deployment-sa.yaml
   - path: patches/storage-config.yaml

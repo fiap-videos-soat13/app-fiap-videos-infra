@@ -15,6 +15,99 @@ terraform/           # AWS: EKS, ECR, RDS, S3, Secrets Manager, IRSA
 docs/                # CD setup and operational guides
 ```
 
+## Architecture
+
+### System context
+
+Event-driven **choreography** over a shared RabbitMQ topic exchange. Each app service owns its PostgreSQL database and communicates only through domain events — no shared tables, no orchestrator.
+
+```mermaid
+graph TB
+    User["User (Browser / API client)"]
+
+    subgraph Platform["Platform (this repo)"]
+        API["API :3000"]
+        Processor["Processor :3001"]
+        Notifier["Notifier :3002"]
+        PG[("PostgreSQL — 3 DBs")]
+        Redis[("Redis")]
+        RMQ["RabbitMQ"]
+        Storage["Object storage<br/>MinIO or S3"]
+    end
+
+    User --> API
+    API --> PG
+    API --> Redis
+    API --> Storage
+    API -- "VideoProcessingRequested" --> RMQ
+    RMQ --> Processor
+    Processor --> PG
+    Processor --> Storage
+    Processor -- "Started / Completed / Failed" --> RMQ
+    RMQ --> API
+    RMQ --> Notifier
+    Notifier --> PG
+    Notifier --> SMTP
+```
+
+### Event catalog
+
+Exchange: `fiap-videos.events` (topic). DLX: `fiap-videos.events.dlx`. Queues: `fiap-videos.{service}.{eventType}`.
+
+| Event | Producer | Consumers |
+|-------|----------|-----------|
+| `VideoProcessingRequested` | API | Processor, Notifier |
+| `VideoProcessingStarted` | Processor | API |
+| `VideoProcessingCompleted` | Processor | API, Notifier |
+| `VideoProcessingFailed` | Processor | API, Notifier |
+
+Reliability: transactional **outbox** (API, Processor), **inbox** on all consumers, per-queue DLQs, correlation IDs on every envelope.
+
+### Local stack (`docker/`)
+
+Compose wires all services and dependencies for full-stack development:
+
+| Layer | Components |
+|-------|------------|
+| Apps | API, Processor, Notifier (built from sibling repos) |
+| Data | PostgreSQL (3 databases), Redis, RabbitMQ |
+| Storage | MinIO (`STORAGE_BACKEND=minio`) |
+| Observability | Prometheus, Grafana |
+| Mail | MailHog (SMTP capture) |
+
+Isolated service repos start only their own Postgres; they share the **single RabbitMQ** instance from this compose file (`localhost:5673`).
+
+### AWS (`terraform/`)
+
+Two-stage Terraform: **bootstrap** (S3 remote state) → **main stack**.
+
+| Module | Resources |
+|--------|-----------|
+| `ecr` | Container image repositories |
+| `s3` | Video/zip object bucket |
+| `rds` | PostgreSQL (per-service databases) |
+| `secrets` | Secrets Manager (DB URLs, JWT, messaging, SMTP) |
+| `eks` | Kubernetes cluster and node groups |
+| `irsa` / `eso-irsa` | Pod IAM for S3 and External Secrets Operator |
+
+Production data plane: RDS, S3, in-cluster or managed RabbitMQ/Redis (see `terraform.tfvars`).
+
+### Kubernetes (`k8s/`)
+
+Kustomize layout:
+
+```
+k8s/
+├── base/              # Deployments, Services, Ingress, migration Jobs, HPA
+├── overlays/
+│   ├── local/         # kind cluster + in-cluster Postgres, Redis, RabbitMQ, MinIO
+│   ├── staging/
+│   └── production/    # IRSA, External Secrets, storage patches
+└── docs/              # IRSA, HPA, External Secrets guides
+```
+
+App CD workflows push images to ECR; **staging deploy** runs from this repo (`make deploy-staging` or `.github/workflows/deploy-staging.yml`).
+
 ## Local development
 
 Full stack via Docker Compose:
@@ -81,9 +174,17 @@ See [terraform/README.md](terraform/README.md) for IRSA role outputs and module 
 ### Kubernetes
 
 ```bash
-# After EKS cluster exists and kubeconfig is set
-kubectl apply -k k8s/overlays/staging
+# First time: provision AWS + cluster addons
+make platform-up
+
+# Deploy staging (infra + apps + migrations)
+make deploy-staging
+
+# Dry-run rendered manifests
+make render-staging
 ```
+
+Staging overlays use `${AWS_ACCOUNT_ID}`, `${S3_BUCKET}`, and IRSA ARNs — rendered via `envsubst` from Terraform outputs (local) or GitHub variables (CI). Do not run plain `kubectl apply -k` on staging without rendering.
 
 #### Local Kubernetes (kind)
 

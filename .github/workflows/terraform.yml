@@ -67,7 +67,9 @@ jobs:
           version: 'v1.30.0'
 
       - name: Build staging overlay
-        run: kubectl kustomize k8s/overlays/staging > /tmp/staging.yaml
+        run: |
+          chmod +x scripts/*.sh
+          make render-staging > /tmp/staging.yaml
 
       - name: Build production overlay
         run: kubectl kustomize k8s/overlays/production > /tmp/production.yaml
