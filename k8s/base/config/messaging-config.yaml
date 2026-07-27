@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fiap-videos-messaging
+data:
+  VIDEO_EVENTS_EXCHANGE: fiap-videos.events
+  VIDEO_EVENTS_DLX: fiap-videos.events.dlx

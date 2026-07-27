@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: fiap-videos-processor-db-migration
+  labels:
+    app.kubernetes.io/name: fiap-videos-processor
+    app.kubernetes.io/component: db-migration
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fiap-videos-processor
+        app.kubernetes.io/component: db-migration
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: fiap-videos-processor-migrator:latest
+          envFrom:
+            - secretRef:
+                name: fiap-videos-processor-secrets
+          command: ['node', 'scripts/docker-migrate.js']

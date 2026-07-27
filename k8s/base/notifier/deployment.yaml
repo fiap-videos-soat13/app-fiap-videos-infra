@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fiap-videos-notifier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fiap-videos-notifier
+  template:
+    metadata:
+      labels:
+        app: fiap-videos-notifier
+    spec:
+      containers:
+        - name: notifier
+          image: fiap-videos-notifier:latest
+          ports:
+            - containerPort: 3002
+          envFrom:
+            - secretRef:
+                name: fiap-videos-notifier-secrets
+            - configMapRef:
+                name: fiap-videos-messaging
+            - configMapRef:
+                name: fiap-videos-notifier-runtime
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fiap-videos-notifier
+spec:
+  selector:
+    app: fiap-videos-notifier
+  ports:
+    - port: 3002
+      targetPort: 3002

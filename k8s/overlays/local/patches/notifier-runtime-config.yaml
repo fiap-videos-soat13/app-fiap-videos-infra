@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fiap-videos-notifier-runtime
+data:
+  LOG_FORMAT: pretty
+  APP_STATUS_URL: http://api.fiap-videos.local:8080

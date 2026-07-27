@@ -1,0 +1,71 @@
+# Infrastructure-only stack for app-fiap-videos
+# Starts backing services (Postgres, Redis, RabbitMQ, MailHog, MinIO) without app containers.
+# Usage:
+#   docker compose -f docker/docker-compose.infra.yml up -d
+#   docker compose -f docker/docker-compose.infra.yml down
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fiap-videos-postgres
+    environment:
+      POSTGRES_USER: fiap
+      POSTGRES_PASSWORD: fiap
+      POSTGRES_DB: fiap_videos
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init-dbs.sh:/docker-entrypoint-initdb.d/01-init-dbs.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U fiap']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: fiap-videos-redis
+    ports:
+      - '6380:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: fiap-videos-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: fiap
+      RABBITMQ_DEFAULT_PASS: fiap
+    ports:
+      - '5673:5672'
+      - '15673:15672'
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: fiap-videos-mailhog
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
+  minio:
+    extends:
+      file: minio-compose.yml
+      service: minio
+
+  minio-init:
+    extends:
+      file: minio-compose.yml
+      service: minio-init
+
+volumes:
+  pgdata:
+  minio_data:

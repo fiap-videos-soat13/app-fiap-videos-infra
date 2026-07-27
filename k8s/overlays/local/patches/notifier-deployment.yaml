@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fiap-videos-notifier
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: notifier
+          imagePullPolicy: IfNotPresent
+      initContainers:
+        - name: wait-for-deps
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z postgres 5432 && nc -z rabbitmq 5672 && nc -z mailhog 1025; do
+                echo "waiting for postgres, rabbitmq, mailhog..."
+                sleep 2
+              done

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fiap-videos-processor-runtime
+data:
+  RABBITMQ_CONNECTION_NAME: processor
+  FFMPEG_PATH: ffmpeg
+  CONSUMER_PREFETCH: "5"

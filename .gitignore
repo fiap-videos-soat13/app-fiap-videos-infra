@@ -2,3 +2,17 @@
 *.log
 .env
 .env.local
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.tfvars
+!*.tfvars.example
+backend.staging.hcl
+backend.production.hcl
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+bruno/*
