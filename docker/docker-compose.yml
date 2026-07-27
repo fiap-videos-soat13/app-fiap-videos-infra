@@ -61,12 +61,14 @@ services:
     build:
       context: ../../app-fiap-videos-api
       dockerfile: Dockerfile
+    env_file:
+      - .env
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://fiap:fiap@postgres:5432/fiap_videos_api
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://fiap:fiap@rabbitmq:5672/
-      JWT_SECRET: dev-secret-change-me
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in docker/.env — copy from .env.example}
       STORAGE_BACKEND: minio
       S3_BUCKET: fiap-videos
       S3_ENDPOINT: http://minio:9000
@@ -147,12 +149,23 @@ services:
     image: prom/prometheus:v2.55.1
     volumes:
       - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
     ports:
       - '9091:9090'
     depends_on:
       - api
       - processor
       - notifier
+      - alertmanager
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    volumes:
+      - ../prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - '9093:9093'
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
 
   grafana:
     image: grafana/grafana:11.3.0

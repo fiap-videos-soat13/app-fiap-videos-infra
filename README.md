@@ -21,6 +21,7 @@ Full stack via Docker Compose:
 
 ```bash
 cd docker
+cp .env.example .env   # edit JWT_SECRET if needed
 docker compose up --build
 ```
 
@@ -36,6 +37,7 @@ docker compose up --build
 | MinIO console | 9001 | `minioadmin` / `minioadmin` |
 | MailHog | 8025 | Test email UI |
 | Prometheus | 9091 | Metrics |
+| Alertmanager | 9093 | Alerts (dev: webhook dummy) |
 | Grafana | 3003 | Dashboards |
 
 ### Dependencies only (yarn start:dev)
@@ -136,3 +138,8 @@ See [docs/CICD-SETUP.md](docs/CICD-SETUP.md) for GitHub Actions deploy configura
 ## Secrets
 
 Production overlays expect **External Secrets Operator** syncing from AWS Secrets Manager keys created by Terraform (`terraform/modules/secrets`). See [k8s/docs/EXTERNAL-SECRETS.md](k8s/docs/EXTERNAL-SECRETS.md).
+
+## Observabilidade
+
+Prometheus carrega regras em `prometheus/alerts.yml` e encaminha para Alertmanager (`:9093`).  
+Em produção, substitua o receiver dummy em `prometheus/alertmanager.yml` por Slack/e-mail.
