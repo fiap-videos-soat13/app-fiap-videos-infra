@@ -20,5 +20,5 @@ spec:
           image: fiap-videos-processor-migrator:latest
           envFrom:
             - secretRef:
-                name: fiap-videos-secrets
+                name: fiap-videos-processor-secrets
           command: ['node', 'scripts/docker-migrate.js']

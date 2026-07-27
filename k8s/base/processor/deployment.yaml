@@ -12,7 +12,6 @@ spec:
       labels:
         app: fiap-videos-processor
     spec:
-      serviceAccountName: fiap-videos-processor
       containers:
         - name: processor
           image: fiap-videos-processor:latest
@@ -20,9 +19,13 @@ spec:
             - containerPort: 3001
           envFrom:
             - secretRef:
-                name: fiap-videos-secrets
+                name: fiap-videos-processor-secrets
             - configMapRef:
                 name: fiap-videos-storage
+            - configMapRef:
+                name: fiap-videos-messaging
+            - configMapRef:
+                name: fiap-videos-processor-runtime
           resources:
             requests:
               cpu: 250m

@@ -1,0 +1,6 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fiap-videos-notifier-runtime
+data:
+  APP_STATUS_URL: https://api.staging.fiap-videos.example.com

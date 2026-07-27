@@ -59,7 +59,7 @@ All services use `RABBITMQ_URL=amqp://fiap:fiap@localhost:5673/`.
 ### Prerequisites
 
 - Terraform >= 1.5
-- AWS CLI configured for `sa-east-1`
+- AWS CLI configured for `us-east-2`
 - kubectl + kustomize
 
 ### Terraform
@@ -83,6 +83,40 @@ See [terraform/README.md](terraform/README.md) for IRSA role outputs and module 
 ```bash
 # After EKS cluster exists and kubeconfig is set
 kubectl apply -k k8s/overlays/staging
+```
+
+#### Local Kubernetes (kind)
+
+For local manifest testing with an in-cluster stack (Postgres, Redis, RabbitMQ, MinIO, MailHog):
+
+**Prerequisites:** Docker, [kind](https://kind.sigs.k8s.io/), kubectl
+
+The bootstrap script installs **ingress-nginx** and **metrics-server** (required for `kubectl top` and HPAs on kind).
+
+```bash
+# From app-fiap-videos-infra — builds images, creates cluster, applies overlay
+./k8s/scripts/kind-local.sh
+```
+
+Add to `/etc/hosts`:
+
+```
+127.0.0.1 api.fiap-videos.local
+```
+
+API: `http://api.fiap-videos.local:8080`
+
+Manual apply (if images are already built and loaded):
+
+```bash
+kubectl apply -k k8s/overlays/local
+```
+
+Teardown:
+
+```bash
+kubectl delete -k k8s/overlays/local
+kind delete cluster --name fiap-videos
 ```
 
 Image tags are patched per overlay. CD workflows in each app repo push to ECR and apply overlays from this repo.

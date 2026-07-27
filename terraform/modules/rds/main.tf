@@ -14,8 +14,30 @@ variable "db_allocated_storage_gb" {
   type = number
 }
 
+variable "db_instance_class" {
+  type    = string
+  default = "db.t3.micro"
+}
+
 output "endpoint" {
   value = aws_db_instance.postgres.address
+}
+
+output "port" {
+  value = aws_db_instance.postgres.port
+}
+
+output "username" {
+  value = aws_db_instance.postgres.username
+}
+
+output "password" {
+  value     = random_password.db.result
+  sensitive = true
+}
+
+output "initial_database_name" {
+  value = aws_db_instance.postgres.db_name
 }
 
 resource "random_password" "db" {
@@ -54,7 +76,7 @@ resource "aws_db_instance" "postgres" {
 
   engine         = "postgres"
   engine_version = "16"
-  instance_class = "db.t3.micro"
+  instance_class = var.db_instance_class
 
   allocated_storage = var.db_allocated_storage_gb
   storage_type      = "gp3"
@@ -66,8 +88,9 @@ resource "aws_db_instance" "postgres" {
   db_subnet_group_name   = aws_db_subnet_group.this.name
   vpc_security_group_ids = [aws_security_group.postgres.id]
 
-  skip_final_snapshot = var.environment == "staging"
-  publicly_accessible = false
+  backup_retention_period = 0
+  skip_final_snapshot     = var.environment == "staging"
+  publicly_accessible     = false
 }
 
 data "aws_vpc" "default" {

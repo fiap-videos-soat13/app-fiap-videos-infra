@@ -1,15 +1,25 @@
 # External Secrets Operator (ESO)
 
-Staging and production overlays sync `fiap-videos-secrets` from **AWS Secrets Manager** instead of the placeholder Secret in `k8s/base/secrets/`.
+Staging and production overlays sync **per-service secrets** from **AWS Secrets Manager**. `base` does not ship static secrets — each overlay provides them.
+
+| Kubernetes Secret | Services |
+|-------------------|----------|
+| `fiap-videos-api-secrets` | API + API migration job |
+| `fiap-videos-processor-secrets` | Processor + processor migration job |
+| `fiap-videos-notifier-secrets` | Notifier + notifier migration job |
 
 ## Prerequisites
 
 1. Install [External Secrets Operator](https://external-secrets.io/) on the cluster.
 2. Create an IAM role for the ESO service account (read access to Secrets Manager keys created by Terraform `modules/secrets`).
-3. Annotate the ESO service account:
+3. Annotate the ESO service account with the role from Terraform:
+
+```bash
+terraform output -raw eso_irsa_role_arn
+```
 
 ```yaml
-eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/fiap-videos-staging-external-secrets
+eks.amazonaws.com/role-arn: <eso_irsa_role_arn from terraform output>
 ```
 
 ## Terraform secret names
@@ -17,10 +27,12 @@ eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/fiap-videos-staging-extern
 | Kubernetes key | Secrets Manager name |
 |----------------|----------------------|
 | `JWT_SECRET` | `fiap-videos/{env}/jwt-secret` |
-| `DATABASE_URL` | `fiap-videos/{env}/database-url` |
+| `DATABASE_URL` (API) | `fiap-videos/{env}/api-database-url` |
+| `DATABASE_URL` (processor) | `fiap-videos/{env}/processor-database-url` |
+| `DATABASE_URL` (notifier) | `fiap-videos/{env}/notifier-database-url` |
+| `REDIS_URL` | `fiap-videos/{env}/redis-url` |
 | `RABBITMQ_URL` | `fiap-videos/{env}/rabbitmq-url` |
-
-Optional notifier SMTP keys can be added later from `fiap-videos/{env}/smtp-config` (store JSON in AWS).
+| `SMTP_*` | `fiap-videos/{env}/smtp-config` (JSON: `host`, `port`, `from`) |
 
 ## Apply order
 
@@ -31,12 +43,12 @@ helm install external-secrets external-secrets/external-secrets -n external-secr
 
 # 2. Wire IAM + populate Secrets Manager values
 
-# 3. Apply overlay (includes ClusterSecretStore + ExternalSecret)
+# 3. Apply overlay (includes ClusterSecretStore + ExternalSecrets)
 kubectl apply -k k8s/overlays/staging
 ```
 
 ## Local / CI without ESO
 
-`k8s/base` still ships `app-secrets.yaml` placeholders. Only overlays delete that Secret and expect ESO to materialize `fiap-videos-secrets`.
+The `local` overlay adds static `secrets/*.yaml` files. No placeholder secret in `base`.
 
 For offline `kubectl kustomize` validation, ESO CRDs are ignored by kubeconform (`-ignore-missing-schemas`).

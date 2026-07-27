@@ -31,6 +31,6 @@ Applies to `app-fiap-videos-api`, `app-fiap-videos-processor`, and `app-fiap-vid
 ## Before first deploy
 
 1. Run Terraform in `app-fiap-videos-infra/terraform` (EKS + ECR).
-2. Create `fiap-videos-secrets` in the cluster (or External Secrets).
+2. Populate per-service secrets in AWS Secrets Manager (or use External Secrets in the overlay).
 3. Replace `REPLACE_AWS_ACCOUNT` in Kustomize overlays with your AWS account ID.
 4. Install nginx Ingress Controller on the cluster.

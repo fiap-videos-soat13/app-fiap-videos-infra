@@ -4,5 +4,5 @@ metadata:
   name: fiap-videos-storage
 data:
   STORAGE_BACKEND: s3
-  AWS_REGION: sa-east-1
+  AWS_REGION: us-east-2
   S3_BUCKET: REPLACE_BUCKET_NAME

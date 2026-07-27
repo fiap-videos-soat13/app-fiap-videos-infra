@@ -19,7 +19,11 @@ spec:
             - containerPort: 3002
           envFrom:
             - secretRef:
-                name: fiap-videos-secrets
+                name: fiap-videos-notifier-secrets
+            - configMapRef:
+                name: fiap-videos-messaging
+            - configMapRef:
+                name: fiap-videos-notifier-runtime
           resources:
             requests:
               cpu: 100m

@@ -3,4 +3,6 @@ kind: Kustomization
 
 resources:
   - cluster-secret-store.yaml
-  - app-external-secret.yaml
+  - api-external-secret.yaml
+  - processor-external-secret.yaml
+  - notifier-external-secret.yaml

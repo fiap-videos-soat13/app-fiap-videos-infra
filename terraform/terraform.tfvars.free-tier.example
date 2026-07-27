@@ -1,0 +1,19 @@
+# Staging profile tuned for AWS credits / Free Tier testing.
+# Copy: cp terraform.tfvars.free-tier.example terraform.tfvars
+
+aws_region  = "us-east-2"
+environment = "staging"
+
+project_name               = "fiap-videos"
+k8s_service_account_prefix = "staging-"
+
+eks_node_instance_types = ["t3.small"]
+eks_node_desired_size     = 1
+eks_node_min_size         = 1
+eks_node_max_size         = 2
+
+db_instance_class       = "db.t3.micro"
+db_allocated_storage_gb = 20
+
+in_cluster_rabbitmq_url = "amqp://fiap:fiap@rabbitmq.fiap-videos.svc:5672/"
+in_cluster_redis_url      = "redis://redis.fiap-videos.svc:6379"

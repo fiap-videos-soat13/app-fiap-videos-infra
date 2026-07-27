@@ -12,7 +12,6 @@ spec:
       labels:
         app: fiap-videos-api
     spec:
-      serviceAccountName: fiap-videos-api
       containers:
         - name: api
           image: fiap-videos-api:latest
@@ -20,9 +19,11 @@ spec:
             - containerPort: 3000
           envFrom:
             - secretRef:
-                name: fiap-videos-secrets
+                name: fiap-videos-api-secrets
             - configMapRef:
                 name: fiap-videos-storage
+            - configMapRef:
+                name: fiap-videos-messaging
             - configMapRef:
                 name: fiap-videos-api-runtime
           readinessProbe:

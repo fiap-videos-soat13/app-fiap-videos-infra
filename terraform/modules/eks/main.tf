@@ -18,6 +18,14 @@ variable "node_desired_size" {
   type = number
 }
 
+variable "node_min_size" {
+  type = number
+}
+
+variable "node_max_size" {
+  type = number
+}
+
 variable "video_bucket_arn" {
   type = string
 }
@@ -122,8 +130,8 @@ resource "aws_eks_node_group" "workers" {
 
   scaling_config {
     desired_size = var.node_desired_size
-    max_size     = var.node_desired_size + 2
-    min_size     = 1
+    min_size     = var.node_min_size
+    max_size     = var.node_max_size
   }
 
   instance_types = var.node_instance_types

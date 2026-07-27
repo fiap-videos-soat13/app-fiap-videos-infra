@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fiap-videos-api
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: api
+          imagePullPolicy: IfNotPresent
+      initContainers:
+        - name: wait-for-deps
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z postgres 5432 && nc -z redis 6379 && nc -z rabbitmq 5672 && nc -z minio 9000; do
+                echo "waiting for postgres, redis, rabbitmq, minio..."
+                sleep 2
+              done

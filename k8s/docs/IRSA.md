@@ -11,6 +11,8 @@ Pods that access S3 use **IAM Roles for Service Accounts (IRSA)**.
 
 Notifier has no S3 access (no IRSA role).
 
+Service accounts live in **staging/production overlays only** (`overlays/{env}/serviceaccounts/`). Local kind does not use IRSA.
+
 ## Staging overlay
 
 After `terraform apply` in `app-fiap-videos-infra`:
@@ -22,14 +24,14 @@ terraform output irsa_s3_role_arns
 
 Replace `REPLACE_AWS_ACCOUNT` in:
 
-- `k8s/overlays/staging/patches/api-sa-irsa.yaml`
-- `k8s/overlays/staging/patches/processor-sa-irsa.yaml`
+- `k8s/overlays/staging/serviceaccounts/api-serviceaccount.yaml`
+- `k8s/overlays/staging/serviceaccounts/processor-serviceaccount.yaml`
 
 Or set ARNs exactly from Terraform output (role names must match `modules/irsa`).
 
 ## namePrefix note
 
-Staging uses `namePrefix: staging-`, so effective ServiceAccount names are `staging-fiap-videos-api` and `staging-fiap-videos-processor`. Terraform IRSA trust policies must use the **prefixed** names when deploying the staging overlay. See PR #3 (`feat/terraform-irsa-backend`) for `service_account_prefix` support.
+Staging uses `namePrefix: staging-`, so effective ServiceAccount names are `staging-fiap-videos-api` and `staging-fiap-videos-processor`. Terraform IRSA trust policies must use the **prefixed** names when deploying the staging overlay. See `service_account_prefix` support in `modules/irsa`.
 
 ## Verify
 
