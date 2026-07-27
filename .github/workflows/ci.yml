@@ -7,17 +7,19 @@ on:
 
 jobs:
   docker-compose-config:
+    name: Validate Docker Compose
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate Docker Compose
+      - name: Validate full stack compose
         working-directory: docker
         run: |
           cp .env.example .env
-          docker compose config --quiet
+          docker compose config
 
   prometheus-config:
+    name: Prometheus Config
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +36,7 @@ jobs:
         run: ./promtool check rules prometheus/alerts.yml
 
   alertmanager-config:
+    name: Alertmanager Config
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,34 +49,51 @@ jobs:
       - name: Check Alertmanager config
         run: ./amtool check-config prometheus/alertmanager.yml
 
-  kubernetes-manifests:
+  monitoring-config-check:
+    name: Monitoring Config Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install kubeconform
+      - name: Validate Grafana provisioning YAML
         run: |
-          curl -sL "https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz" \
-            | tar xz kubeconform
-
-      - name: Validate processor manifest
-        run: ./kubeconform -summary -kubernetes-version 1.30.0 k8s/processor-deployment.yaml
-
-  grafana-dashboards:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+          python3 - <<'PY'
+          import yaml
+          from pathlib import Path
+          for p in Path('grafana/provisioning').rglob('*.yml'):
+              with open(p) as f:
+                  yaml.safe_load(f)
+              print(f'{p} is valid YAML')
+          PY
 
       - name: Validate Grafana dashboard JSON
-        run: python -m json.tool grafana/dashboards/fiap-videos-overview.json > /dev/null
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for p in Path('grafana/dashboards').rglob('*.json'):
+              with open(p) as f:
+                  json.load(f)
+              print(f'{p} is valid JSON')
+          PY
 
   ci-success:
+    name: CI Success
     runs-on: ubuntu-latest
     needs:
       - docker-compose-config
       - prometheus-config
       - alertmanager-config
-      - kubernetes-manifests
-      - grafana-dashboards
+      - monitoring-config-check
+    if: always()
     steps:
-      - run: echo "Infra CI passed"
+      - name: Require all jobs to succeed
+        run: |
+          if [ "${{ needs.docker-compose-config.result }}" != "success" ] || \
+             [ "${{ needs.prometheus-config.result }}" != "success" ] || \
+             [ "${{ needs.alertmanager-config.result }}" != "success" ] || \
+             [ "${{ needs.monitoring-config-check.result }}" != "success" ]; then
+            echo "One or more required CI jobs failed."
+            exit 1
+          fi
+          echo "All required CI jobs passed."

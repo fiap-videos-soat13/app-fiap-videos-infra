@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: fiap-videos
+
+resources:
+  - ../../base
+  - infra
+  - secrets
+
+images:
+  - name: fiap-videos-api
+    newName: fiap-videos-api
+    newTag: local
+  - name: fiap-videos-processor
+    newName: fiap-videos-processor
+    newTag: local
+  - name: fiap-videos-notifier
+    newName: fiap-videos-notifier
+    newTag: local
+  - name: fiap-videos-api-migrator
+    newName: fiap-videos-api
+    newTag: local-migrator
+  - name: fiap-videos-processor-migrator
+    newName: fiap-videos-processor
+    newTag: local-migrator
+  - name: fiap-videos-notifier-migrator
+    newName: fiap-videos-notifier
+    newTag: local-migrator
+
+patches:
+  - path: patches/api-hpa.yaml
+  - path: patches/processor-hpa.yaml
+  - path: patches/api-deployment.yaml
+  - path: patches/processor-deployment.yaml
+  - path: patches/notifier-deployment.yaml
+  - path: patches/api-migration-job.yaml
+  - path: patches/processor-migration-job.yaml
+  - path: patches/notifier-migration-job.yaml
+  - path: patches/storage-config.yaml
+  - path: patches/api-runtime-config.yaml
+  - path: patches/notifier-runtime-config.yaml
+  - path: patches/ingress-patch.yaml

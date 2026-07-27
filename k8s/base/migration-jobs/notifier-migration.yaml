@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: fiap-videos-notifier-db-migration
+  labels:
+    app.kubernetes.io/name: fiap-videos-notifier
+    app.kubernetes.io/component: db-migration
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fiap-videos-notifier
+        app.kubernetes.io/component: db-migration
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: fiap-videos-notifier-migrator:latest
+          envFrom:
+            - secretRef:
+                name: fiap-videos-notifier-secrets
+          command: ['node', 'scripts/docker-migrate.js']

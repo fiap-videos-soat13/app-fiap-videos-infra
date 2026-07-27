@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: fiap-videos
+
+resources:
+  - namespace.yaml
+  - config/storage-config.yaml
+  - config/messaging-config.yaml
+  - config/api-runtime-config.yaml
+  - config/processor-runtime-config.yaml
+  - config/notifier-runtime-config.yaml
+  - autoscaling/api-hpa.yaml
+  - autoscaling/processor-hpa.yaml
+  - api/deployment.yaml
+  - processor/deployment.yaml
+  - notifier/deployment.yaml
+  - ingress/api-ingress.yaml
+  - migration-jobs/api-migration.yaml
+  - migration-jobs/processor-migration.yaml
+  - migration-jobs/notifier-migration.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: fiap-videos

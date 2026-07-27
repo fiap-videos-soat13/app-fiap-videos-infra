@@ -19,7 +19,13 @@ spec:
             - containerPort: 3001
           envFrom:
             - secretRef:
-                name: fiap-videos-secrets
+                name: fiap-videos-processor-secrets
+            - configMapRef:
+                name: fiap-videos-storage
+            - configMapRef:
+                name: fiap-videos-messaging
+            - configMapRef:
+                name: fiap-videos-processor-runtime
           resources:
             requests:
               cpu: 250m
@@ -28,21 +34,13 @@ spec:
               cpu: '2'
               memory: 2Gi
 ---
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
+apiVersion: v1
+kind: Service
 metadata:
-  name: fiap-videos-processor-hpa
+  name: fiap-videos-processor
 spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: fiap-videos-processor
-  minReplicas: 2
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
+  selector:
+    app: fiap-videos-processor
+  ports:
+    - port: 3001
+      targetPort: 3001

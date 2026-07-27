@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fiap-videos-api-runtime
+data:
+  NODE_ENV: development
+  TRUST_PROXY: "true"
+  CORS_ORIGINS: http://api.fiap-videos.local:8080

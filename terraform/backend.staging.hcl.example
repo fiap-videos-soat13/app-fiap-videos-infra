@@ -1,0 +1,5 @@
+bucket         = "fiap-videos-staging-terraform-state"
+key            = "infra/terraform.tfstate"
+region         = "us-east-2"
+dynamodb_table = "fiap-videos-staging-terraform-lock"
+encrypt        = true

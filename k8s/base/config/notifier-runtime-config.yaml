@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fiap-videos-notifier-runtime
+data:
+  RABBITMQ_CONNECTION_NAME: notifier
+  LOG_FORMAT: json
