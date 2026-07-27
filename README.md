@@ -13,6 +13,8 @@ k8s/base/            # Kubernetes Deployments, Ingress, migration Jobs
 k8s/overlays/        # staging / production Kustomize overlays
 terraform/           # AWS: EKS, ECR, RDS, S3, Secrets Manager, IRSA
 docs/                # CD setup and operational guides
+README-database.md   # PostgreSQL layout, migrations, RDS setup
+README-CICD.md       # GitHub Actions deploy configuration
 ```
 
 ## Architecture
@@ -123,7 +125,7 @@ docker compose up --build
 | API | 3000 | Upload, auth, status, download |
 | Processor | 3001 | ffmpeg workers + zip |
 | Notifier | 3002 | Email notifications |
-| PostgreSQL | 5433 | 3 databases |
+| PostgreSQL | 5432 | 3 databases |
 | Redis | 6380 | List cache |
 | RabbitMQ | 5673 / 15673 | Shared message broker |
 | MinIO (S3 API) | 9000 | Object storage |
@@ -226,7 +228,7 @@ Image tags are patched per overlay. CD workflows in each app repo push to ECR an
 
 See [k8s/docs/IRSA.md](k8s/docs/IRSA.md), [k8s/docs/HPA.md](k8s/docs/HPA.md), and [k8s/docs/EXTERNAL-SECRETS.md](k8s/docs/EXTERNAL-SECRETS.md) for pod IAM, autoscaling, and secrets setup.
 
-See [docs/CICD-SETUP.md](docs/CICD-SETUP.md) for GitHub Actions deploy configuration.
+See [README-CICD.md](README-CICD.md) for GitHub Actions deploy configuration and [README-database.md](README-database.md) for PostgreSQL layout and migrations.
 
 ## Related repos
 
