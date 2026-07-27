@@ -72,11 +72,11 @@ output "eso_irsa_role_arn" {
 output "kustomize_replacements" {
   description = "Values to patch in k8s/overlays/staging before kubectl apply"
   value = {
-    aws_account_id = data.aws_caller_identity.current.account_id
-    aws_region     = var.aws_region
-    s3_bucket      = module.s3.bucket_name
-    api_irsa_arn   = module.irsa.s3_access_role_arns.api
+    aws_account_id     = data.aws_caller_identity.current.account_id
+    aws_region         = var.aws_region
+    s3_bucket          = module.s3.bucket_name
+    api_irsa_arn       = module.irsa.s3_access_role_arns.api
     processor_irsa_arn = module.irsa.s3_access_role_arns.processor
-    eso_irsa_arn   = module.eso_irsa.role_arn
+    eso_irsa_arn       = module.eso_irsa.role_arn
   }
 }
