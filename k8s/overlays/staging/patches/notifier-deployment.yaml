@@ -1,0 +1,6 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fiap-videos-notifier
+spec:
+  replicas: 1

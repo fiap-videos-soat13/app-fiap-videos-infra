@@ -1,0 +1,53 @@
+name: Deploy Staging
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - staging
+    paths:
+      - 'k8s/overlays/staging/**'
+      - 'scripts/**'
+      - '.github/workflows/deploy-staging.yml'
+
+env:
+  AWS_REGION: us-east-2
+  K8S_NAMESPACE: fiap-videos
+  EKS_CLUSTER_NAME: fiap-videos-staging
+  S3_BUCKET: ${{ vars.S3_BUCKET }}
+  API_IRSA_ARN: ${{ vars.API_IRSA_ARN }}
+  PROCESSOR_IRSA_ARN: ${{ vars.PROCESSOR_IRSA_ARN }}
+  ESO_IRSA_ARN: ${{ vars.ESO_IRSA_ARN }}
+
+jobs:
+  deploy:
+    if: vars.CD_ENABLED == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.31.0'
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: 'v3.16.2'
+
+      - name: Ensure cluster addons
+        run: |
+          chmod +x scripts/*.sh
+          ./scripts/bootstrap-cluster-addons.sh
+
+      - name: Deploy staging stack
+        run: ./scripts/deploy-staging.sh

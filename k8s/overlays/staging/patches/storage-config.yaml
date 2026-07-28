@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: fiap-videos-storage
 data:
-  S3_BUCKET: fiap-videos-staging-videos
+  S3_BUCKET: ${S3_BUCKET}

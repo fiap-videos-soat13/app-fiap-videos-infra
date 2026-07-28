@@ -8,6 +8,17 @@ resources:
 
 namePrefix: production-
 
+replacements:
+  - source:
+      kind: ClusterSecretStore
+      name: fiap-videos-aws-secrets
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: ExternalSecret
+        fieldPaths:
+          - spec.secretStoreRef.name
+
 images:
   - name: fiap-videos-api
     newName: REPLACE_AWS_ACCOUNT.dkr.ecr.us-east-2.amazonaws.com/fiap-videos-api
